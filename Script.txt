@@ -1,0 +1,103 @@
+CREATE TABLE cliente (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    endereco VARCHAR(255),
+    telefone VARCHAR(15),
+    email VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE livro (
+    id SERIAL PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    autor VARCHAR(150),
+    isbn VARCHAR(20) UNIQUE NOT NULL,
+    genero VARCHAR(50),
+    status VARCHAR(20) DEFAULT 'Disponível' -- Substituído por um VARCHAR simples com valor padrão
+);
+
+CREATE TABLE funcionario (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    cargo VARCHAR(50),
+    telefone VARCHAR(15),
+    email VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE emprestimo (
+    id SERIAL PRIMARY KEY,
+    data_retirada DATE NOT NULL,
+    data_devolucao_prevista DATE NOT NULL,
+    multa NUMERIC(10, 2) DEFAULT 0.00,
+    status VARCHAR(20) DEFAULT 'Ativo', -- Substituído por um VARCHAR simples com valor padrão
+    id_cliente INT REFERENCES cliente(id) ON DELETE CASCADE,
+    id_funcionario INT REFERENCES funcionario(id) ON DELETE CASCADE
+);
+
+CREATE TABLE emprestimo_livro (
+    id SERIAL PRIMARY KEY,
+    id_emprestimo INT REFERENCES emprestimo(id) ON DELETE CASCADE,
+    id_livro INT REFERENCES livro(id) ON DELETE CASCADE
+);
+
+-- Inserindo dados
+INSERT INTO cliente (nome, endereco, telefone, email)
+VALUES
+('João', 'Rua Formiga', '(83)-xxxx', 'joaovictoruniesp@gmail.com'),
+('Ana Ferreira', 'Rua Central', '(83) 91234-5678', 'ana@email.com');
+
+INSERT INTO livro (titulo, autor, isbn, genero, status)
+VALUES
+('Dom Casmurro', 'Machado de Assis', '9394', 'Romance', 'Disponível'),
+('O Hobbit', 'J.R.R. Tolkien', '978-0-261-10221-4', 'Fantasia', 'Emprestado');
+
+INSERT INTO funcionario (nome, cargo, telefone, email)
+VALUES
+('Carlos Silva', 'Bibliotecário', '(83) 91234-5678', 'carlos@biblioteca.com'),
+('Mariana Oliveira', 'Assistente', '(83) 98765-4321', 'mariana@biblioteca.com');
+
+INSERT INTO emprestimo (data_retirada, data_devolucao_prevista, multa, status, id_cliente, id_funcionario)
+VALUES
+('2023-09-15', '2023-09-30', 0.00, 'Ativo', 1, 1),
+('2023-09-10', '2023-09-25', 10.00, 'Concluído', 2, 2);
+
+INSERT INTO emprestimo_livro (id_emprestimo, id_livro)
+VALUES
+(1, 1),
+(2, 2);
+
+-- Atualizações
+UPDATE cliente
+SET endereco = 'Rua Nova, 456'
+WHERE nome = 'Ana Ferreira';
+
+UPDATE emprestimo
+SET multa = 5.00
+WHERE id = 2;
+
+-- Consulta
+SELECT
+    c.nome AS cliente_nome,
+    c.endereco AS cliente_endereco,
+    c.telefone AS cliente_telefone,
+    c.email AS cliente_email,
+    e.data_retirada AS emprestimo_data_retirada,
+    e.data_devolucao_prevista AS emprestimo_data_devolucao_prevista,
+    e.multa AS emprestimo_multa,
+    e.status AS emprestimo_status,
+    l.titulo AS livro_titulo,
+    l.autor AS livro_autor,
+    l.genero AS livro_genero,
+    l.status AS livro_status,
+    f.nome AS funcionario_nome,
+    f.cargo AS funcionario_cargo,
+    f.email AS funcionario_email
+FROM
+    cliente c
+LEFT JOIN
+    emprestimo e ON c.id = e.id_cliente
+LEFT JOIN
+    emprestimo_livro el ON e.id = el.id_emprestimo
+LEFT JOIN
+    livro l ON el.id_livro = l.id
+LEFT JOIN
+    funcionario f ON e.id_funcionario = f.id;
